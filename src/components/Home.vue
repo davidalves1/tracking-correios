@@ -70,7 +70,7 @@ export default {
         return
       }
 
-      let uri = `http://api.postmon.com.br/v1/rastreio/ect/${this.tracking_code}`
+      let uri = `https://api.postmon.com.br/v1/rastreio/ect/${this.tracking_code}`
 
       let vm = this
 
