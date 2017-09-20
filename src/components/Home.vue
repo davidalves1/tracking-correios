@@ -74,7 +74,11 @@ export default {
 
       let vm = this
 
-      this.$http.get(uri)
+      this.$http({
+        method: 'GET',
+        url: uri,
+        withCredentials: false
+      })
         .then((res) => {
           if (res.status !== 200) {
             vm.showError('Não foi possível obter o histório de rastreio')
