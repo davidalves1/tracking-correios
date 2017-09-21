@@ -105,6 +105,7 @@ export default {
 
 <style>
   .content {
+    max-width: 768px;
     text-align: center;
     margin: 1rem;
   }
