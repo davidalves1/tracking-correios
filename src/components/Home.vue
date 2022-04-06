@@ -5,41 +5,33 @@
   	    Rastreio Correios
   	  </q-toolbar-title>
     </q-toolbar>
-    
+
     <q-field label="Código de Rastreio" class="content">
-      <q-input v-model="tracking_code" />
+      <q-input v-model="trackingCode" />
       <q-btn color="primary" class="button" @click="getTracking">Rastrear</q-btn>
       <q-btn color="primary" class="button" @click="clearResult">Limpar</q-btn>
     </q-field>
 
-    <q-list class="content" v-if="tracking.length !== 0">
-      <q-list-header>Histórico</q-list-header>
-      <q-item-separator />
-      <q-item v-for="track in tracking" :key="track.id">
-        <q-item-side left label><small>{{track.data}}</small></q-item-side>
-        <q-item-main><small>{{track.local}}</small> <br> {{track.situacao}}</q-item-main>
-      </q-item>
-      <q-item-separator />
-    </q-list>
+    <status-list :tracking="tracking" v-if="hasTrackingStatus" />
   </q-layout>
 </template>
 
 <script>
 import {
+  Loading,
   QLayout,
   QToolbar,
   QToolbarTitle,
   QField,
   QInput,
   QBtn,
-  QList,
-  QListHeader,
-  QItem,
-  QItemSide,
-  QItemMain,
-  QItemSeparator,
+  QSpinnerGears,
   Toast
 } from 'quasar'
+import StatusList from './StatusList.vue'
+import { getTracking } from '../services/postmonApi'
+
+const TRACKING_CODE_LENGTH = 13
 
 export default {
   components: {
@@ -49,46 +41,42 @@ export default {
     QField,
     QInput,
     QBtn,
-    QList,
-    QListHeader,
-    QItem,
-    QItemSide,
-    QItemMain,
-    QItemSeparator,
-    Toast
+    QSpinnerGears,
+    Toast,
+    StatusList
   },
   data () {
     return {
-      tracking_code: '',
+      trackingCode: '', // YC059602439BR QB610653136BR
       tracking: []
     }
   },
+  computed: {
+    hasTrackingStatus () {
+      return !!this.tracking.length
+    }
+  },
   methods: {
-    getTracking () {
-      if (this.tracking_code === '' || this.tracking_code.length !== 13) {
+    async getTracking () {
+      if (this.trackingCode.length !== TRACKING_CODE_LENGTH) {
         this.showError('Informe um código de rastreio válido')
         return
       }
 
-      let uri = `https://api.postmon.com.br/v1/rastreio/ect/${this.tracking_code}`
-
-      let vm = this
-
-      this.$http({
-        method: 'GET',
-        url: uri,
-        withCredentials: false
-      })
-        .then((res) => {
-          if (res.status !== 200) {
-            vm.showError('Não foi possível obter o histório de rastreio')
-          }
-
-          vm.tracking = res.data.historico
+      try {
+        Loading.show({
+          delay: 50
         })
-        .catch((err) => {
-          console.log(err)
-        })
+        const { historico } = await getTracking(this.trackingCode)
+        this.tracking = historico
+      }
+      catch (error) {
+        const errorCode = (error.response && error.response.status) || 0
+        this.showError(`Não foi possível obter o histório de rastreio. [${errorCode}]`)
+      }
+      finally {
+        Loading.hide()
+      }
     },
     clearResult () {
       this.tracking = []
